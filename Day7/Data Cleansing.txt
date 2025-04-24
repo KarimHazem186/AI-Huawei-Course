@@ -1,0 +1,147 @@
+**************************************************** Data Cleaning *****************************************************************************************
+
+Data Cleaning: fixing bad data in the given data set and this includes Empty cells , Duplicated Rows, Data in wrong format , Wrong data 
+
+************************************************************************************************************************************************************
+1-Handling Empty Cells/Missing Values:  Null values or empty cells are known as np.nan
+
+Not all algorithms fail when there is missing data.
+There are algorithms that can be made robust to missing data, such as k-Nearest Neighbors that can ignore a column from a distance measure when a value is missing. Naive Bayes can also support missing values when making a prediction.
+
+
+###############  Finding The missing Values ###############
+df.isnull() or df.isna() ----->>> Return a boolean same-sized object indicating if the values are NA.
+df.notna() or df.notnull() ------->>> Return a boolean same-sized object indicating if the values are not NA.
+df.isnull().any() ------->>> Checking if any NULL values are present in a column. (or give the result for the row if axis =1 with any(axis=1) )
+df.isnull().sum() ------->>> Count of nulls in each column in the dataset.(or give the result for the row if axis =1 with sum(axis=1)  )
+df.isnull().sum().sum() ------->>> Count of nulls in all the dataframe.
+df.count() ------->>> Count of non-nulls in each column in the dataset. (or give the result for the row if axis =1 with sum(axis=1)  )
+-------------------------------------------------------------------------------------------
+###############  Solution 1: Dropping The missing Values ###############
+
+We use it to remove rows and columns that include null values. 
+It also has several parameters such as axis to define whether rows or columns drop, how to determine if missing values occur in any or all of the rows/columns, and subset to select a group of columns or labels to apply the drop function on.
+It means losing data which may be valuable (even though incomplete).
+
+df.dropna( axis= 0 or 1, how {‘any’, ‘all’}, inplace= True) ------->>> Return the df with missing values (NaN) removed. Axis =0 (default) rows will be removed                   while if axis=1 columns are removed.Also, how  determines when to remove if all or any of the values is missing and the default ‘any’.
+df.dropna(subset=['column_name'], inplace = True) ------->>> Return the df with missing values in the column (NaN) removed.
+
+index.dropna ------->>> Return Index without NA/NaN values.
+-------------------------------------------------------------------------------------------
+############### Solution 2:   1-Imputing The missing Values using pandas ###############
+
+1-fillna function : Fill NA/NaN values using the specified method.
+
+df.fillna(value, inplace=True, method = 'ffill', limit=3)---->>> Fill NA/NaN values in df using the specified method and required number of missing data to be replaced
+Note: If we run the function while using the whole DataFrame, it would fill every missing data with the passed values, even if it is not your intention. 
+
+Note: If you to replace the missing data on certain columns,specify the column name for the DataFrame using the following notation:
+      df["column"].fillna(value, inplace = True)
+
+Note: You Can replace empty cells using Mean, Median, or Mode: Use mean() median() and mode() methods to calculate the respective values for a specified column
+      If there are outliers, then the mean will not be appropriate. In such cases, outliers need to be treated first. 
+      It’s better to use the median value for imputation in the case of outliers.
+      Mode is used in the case of categorical features.
+     
+      x = df["column_name"].mean() or .median() or .mode()[0]
+      df["column_name"].fillna(x, inplace = True)
+
+Note: You can use dictionary containing the column's name as the key and what to replace as the values using the following notation:
+df.fillna( {'column_1':value1, 
+            'column_2':value2, 
+            'column_3': df['column_3'].mean()} )
+
+Forward and backward fill : These methods are a good if you know the previous and the data after are still related, such as in the time series data.
+  1-method = 'ffill' : forward fill which fills the cell with the previous / perceding cell.
+  2-method = 'bfill' : backward fill which fills the cell with the next   / succession cell.
+
+https://www.kdnuggets.com/2023/02/optimal-way-input-missing-data-pandas-fillna.html
+
+2-Replace function : Replaces the specified value with another specified value.
+                     Searches the entire DataFrame and replaces every case of the specified value.
+                     Replace values given in to_replace with value.
+
+# Replace the null values with the mean:
+df['A'].replace([numpy.nan], df['A'].mean(), inplace=True)
+
+# Replace column A with the median:
+df['B'].replace([numpy.nan], df['B'].median(), inplace=True)
+
+# Use the modal value for column C:
+df['C'].replace([numpy.nan], df['C'].mode()[0], inplace=True)
+
+3-Interpolate function: Fill NaN values using an interpolation method.
+                        Uses existing values in the df to estimate the missing rows using interpolation methods (polynomial,linear (default), quadratic) 
+                        Applies to numeric columns, as it uses mathematical estimation for fill missing roles.
+                        It uses various interpolation technique to fill the missing values rather than hard-coding the value.
+
+# Interpolate backwardly across the column:
+df.interpolate(method ='linear', limit_direction ='backward', inplace=True)
+
+# Interpolate in forward order across the column:
+df.interpolate(method ='linear', limit_direction ='forward', inplace=True)
+
+############### Solution2- Imputing The missing values using Sklearn imputers ###############
+
+The missing value can be set to whatever value you’d like and does not have to be equivalent to np.nan as it does using the fillna() function in Pandas. 
+The imputation strategy can easily be changed between one of the following four options (mean,median,constant and most_frequent) 
+Imputers can also be placed in sklearn pipelines and even for more granular control in the column transformer. 
+It is a flexible class that allows you to specify the value to replace (it can be something other than NaN) and the technique used to replace ( mean, median, or mode).
+It creates a model to predict the observed value of a variable based on another variable which is known as regression imputation.
+
+Types: 
+1- Univariate Approach: single feature is taken into consideration such as (SimpleImputer)
+    from sklearn.impute import SimpleImputer
+    imputer = SimpleImputer(missing_values= {np.nan or pd.NA} , strategy= {'mean','median','constant','most_frequent'}
+    imputer.fit(train_data) 
+    imputer.transform(test_data)
+
+2- Multivariate Approach: more than one feature is taken into consideration such as (KNNImputer or IterativeImputer) 
+   from sklearn.impute import KNNImputer
+   imputer = KNNImputer(missing_values ={np.nan or None} , n_neighbors=2)
+   imputer.fit(train_data) 
+   imputer.transform(test_data)
+
+https://www.analyticsvidhya.com/blog/2021/10/handling-missing-value/
+
+            ***3-Imputing The missing Values using Regression models ***
+
+Null values in one column are filled by fitting a regression model using other columns in the dataset.
+Example:
+from sklearn.linear_model import LinearRegression
+lr = LinearRegression()
+df.head()
+testdf = df[df['Age'].isnull()==True]
+traindf = df[df['Age'].isnull()==False]
+y = traindf['Age']
+traindf.drop("Age",axis=1,inplace=True)
+lr.fit(traindf,y)
+testdf.drop("Age",axis=1,inplace=True)
+pred = lr.predict(testdf)
+testdf['Age']= pred
+
+https://www.analyticsvidhya.com/blog/2021/05/dealing-with-missing-values-in-python-a-complete-guide/
+
+************************************************************************************************************************************************************
+2-Handing duplicated rows: duplicate rows are rows that have been registered more than one time.
+
+df.duplicated() ----->>> returns the duplicated rows in the given data frame
+df.drop_duplicates(inplace = True) ----->>> Remove the duplicated rows
+
+************************************************************************************************************************************************************
+3- Handling Data in wrong format: if the data in wrong format , remove the rows, or convert all cells in the columns into the same format.
+
+************************************************************************************************************************************************************
+
+4- Hnadling Wrong Data: Wrong data does not have to be empty cells or wrong format, it can just be wrong, like if someone registered 199 instead of 1.99.
+      For small data sets you might be able to replace the wrong data one by one, but not for big data sets.
+      To replace wrong data for larger data sets you can create some rules, set some boundaries for legal values, replace values that are outside of the boundaries.
+       for x in df.index:
+            if df.loc[x, "Duration"] > 120:
+               df.loc[x, "Duration"] = 120
+      Another way of handling wrong data is to remove the rows that contains wrong data.
+       for x in df.index:
+          if df.loc[x, "Duration"] > 120:
+             df.drop(x, inplace = True)
+************************************************************************************************************************************************************
+
